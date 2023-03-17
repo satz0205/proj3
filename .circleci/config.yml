@@ -273,6 +273,58 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1      
+
+  deploy-backend:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.8-alpine3.17
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ["ca:98:e2:4c:27:d2:b4:fa:5e:95:10:bd:fe:52:47:b2"]
+      # attach workspace
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install dependencies
+          command: |
+            # Your code here
+            apk add --update ansible
+            apk add curl
+            apk add openssh-client nodejs npm
+            pip install awscli
+            npm install
+      - run:
+          name: Deploy backend
+          command: |
+            # your code here
+            cd backend
+            npm i
+            npm run build
+            echo ENVIRONMENT=production > ".env"
+            echo TYPEORM_CONNECTION=postgres >> ".env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/*/*/*.entity.ts >> ".env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> ".env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> ".env"
+            echo NODE_ENV=production >> ".env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
+            cp package* ./dist
+            cd ..
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+# Here's where you will add some code to rollback on failure  
+      - destroy-environment  
+      - slack/notify:
+          event: fail
+          template: basic_fail_1            
   
             
     
@@ -298,4 +350,6 @@ workflows:
         - run-migrations:
            requires: [configure-infrastructure]
         - deploy-frontend:
+           requires: [run-migrations]
+        - deploy-backend:
            requires: [run-migrations]
