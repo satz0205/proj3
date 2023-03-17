@@ -161,6 +161,38 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1 
+  
+  configure-infrastructure:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.8-alpine3.17
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ["5b:07:8c:dd:82:72:18:04:61:c4:5f:3b:91:35:b3:04:c9:fe:fb:50"]
+      # attach workspace
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install dependencies
+          command: |
+            # Your code here
+            apk add --update ansible
+            apk add curl
+            apk add openssh-client
+            pip install awscli
+      - run:
+          name: Configure server
+          command: |
+            # Your code here
+            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
+      # Here's where you will add some code to rollback on failure      
+      - destroy-environment  
+      - slack/notify:
+          event: fail
+          template: basic_fail_1    
 
   
             
@@ -180,6 +212,6 @@ workflows:
 #           requires: [build-backend]
 #       - scan-frontend:
 #           requires: [build-frontend]
-        - deploy-infrastructure
+#       - deploy-infrastructure
 #          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-           
+        - configure-infrastructure  
