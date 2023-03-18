@@ -295,6 +295,7 @@ jobs:
             apk add curl
             apk add openssh-client nodejs npm
             pip install awscli
+            sudo npm install npm -g
             npm install
       - run:
           name: Deploy backend
@@ -305,7 +306,7 @@ jobs:
             npm run build
             echo ENVIRONMENT=production > ".env"
             echo TYPEORM_CONNECTION=postgres >> ".env"
-            echo TYPEORM_ENTITIES=./src/modules/domain/*/*/*.entity.ts >> ".env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> ".env"
             echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> ".env"
             echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> ".env"
             echo NODE_ENV=production >> ".env"
