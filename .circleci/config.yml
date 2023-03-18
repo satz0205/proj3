@@ -277,7 +277,7 @@ jobs:
   deploy-backend:
     docker:
       # Docker image here that supports Ansible
-      - image: python:3.8-alpine3.17
+      - image: python:3.7-alpine3.11
     steps:
       # Checkout code from git
       - checkout
@@ -295,7 +295,6 @@ jobs:
             apk add curl
             apk add openssh-client nodejs npm
             pip install awscli
-            sudo npm install npm -g
             npm install
       - run:
           name: Deploy backend
